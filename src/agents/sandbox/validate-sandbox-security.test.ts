@@ -74,7 +74,7 @@ describe("validateBindMounts", () => {
     expect(() => validateBindMounts(["//etc//passwd:/mnt/passwd"])).toThrow(/blocked path "\/etc"/);
   });
 
-  it("blocks symlink escapes into blocked directories", () => {
+  it.skipIf(process.platform === "win32")("blocks symlink escapes into blocked directories", () => {
     const dir = mkdtempSync(join(tmpdir(), "openclaw-sbx-"));
     const link = join(dir, "etc-link");
     symlinkSync("/etc", link);

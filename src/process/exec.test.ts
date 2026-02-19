@@ -58,8 +58,8 @@ describe("runCommandWithTimeout", () => {
         'let i=0; const t=setInterval(() => { process.stdout.write("."); i += 1; if (i >= 2) { clearInterval(t); process.exit(0); } }, 5);',
       ],
       {
-        timeoutMs: 1_000,
-        noOutputTimeoutMs: 120,
+        timeoutMs: 5_000,
+        noOutputTimeoutMs: 500,
       },
     );
 

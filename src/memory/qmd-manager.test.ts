@@ -1044,25 +1044,28 @@ describe("QmdMemoryManager", () => {
     await manager.close();
   });
 
-  it("blocks non-markdown or symlink reads for qmd paths", async () => {
-    const { manager } = await createManager();
+  it.skipIf(process.platform === "win32")(
+    "blocks non-markdown or symlink reads for qmd paths",
+    async () => {
+      const { manager } = await createManager();
 
-    const textPath = path.join(workspaceDir, "secret.txt");
-    await fs.writeFile(textPath, "nope", "utf-8");
-    await expect(manager.readFile({ relPath: "qmd/workspace-main/secret.txt" })).rejects.toThrow(
-      "path required",
-    );
+      const textPath = path.join(workspaceDir, "secret.txt");
+      await fs.writeFile(textPath, "nope", "utf-8");
+      await expect(manager.readFile({ relPath: "qmd/workspace-main/secret.txt" })).rejects.toThrow(
+        "path required",
+      );
 
-    const target = path.join(workspaceDir, "target.md");
-    await fs.writeFile(target, "ok", "utf-8");
-    const link = path.join(workspaceDir, "link.md");
-    await fs.symlink(target, link);
-    await expect(manager.readFile({ relPath: "qmd/workspace-main/link.md" })).rejects.toThrow(
-      "path required",
-    );
+      const target = path.join(workspaceDir, "target.md");
+      await fs.writeFile(target, "ok", "utf-8");
+      const link = path.join(workspaceDir, "link.md");
+      await fs.symlink(target, link);
+      await expect(manager.readFile({ relPath: "qmd/workspace-main/link.md" })).rejects.toThrow(
+        "path required",
+      );
 
-    await manager.close();
-  });
+      await manager.close();
+    },
+  );
 
   it("reads only requested line ranges without loading the whole file", async () => {
     const readFileSpy = vi.spyOn(fs, "readFile");
@@ -1333,7 +1336,7 @@ describe("QmdMemoryManager", () => {
     ).rejects.toThrow(/qmd query returned invalid JSON/);
     await manager.close();
   });
-  describe("model cache symlink", () => {
+  describe.skipIf(process.platform === "win32")("model cache symlink", () => {
     let defaultModelsDir: string;
     let customModelsDir: string;
     let savedXdgCacheHome: string | undefined;

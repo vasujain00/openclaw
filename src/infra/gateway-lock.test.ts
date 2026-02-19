@@ -160,56 +160,59 @@ describe("gateway lock", () => {
     await cleanup();
   });
 
-  it("keeps lock on linux when proc access fails unless stale", async () => {
-    vi.useRealTimers();
-    const { env, cleanup } = await makeEnv();
-    const { lockPath, configPath } = resolveLockPath(env);
-    const payload = createLockPayload({ configPath, startTime: 111 });
-    await fs.writeFile(lockPath, JSON.stringify(payload), "utf8");
+  it.skipIf(process.platform === "win32")(
+    "keeps lock on linux when proc access fails unless stale",
+    async () => {
+      vi.useRealTimers();
+      const { env, cleanup } = await makeEnv();
+      const { lockPath, configPath } = resolveLockPath(env);
+      const payload = createLockPayload({ configPath, startTime: 111 });
+      await fs.writeFile(lockPath, JSON.stringify(payload), "utf8");
 
-    const spy = mockProcStatRead({
-      onProcRead: () => {
-        throw new Error("EACCES");
-      },
-    });
+      const spy = mockProcStatRead({
+        onProcRead: () => {
+          throw new Error("EACCES");
+        },
+      });
 
-    const pending = acquireGatewayLock({
-      env,
-      allowInTests: true,
-      timeoutMs: 15,
-      pollIntervalMs: 2,
-      staleMs: 10_000,
-      platform: "linux",
-    });
-    await expect(pending).rejects.toBeInstanceOf(GatewayLockError);
+      const pending = acquireGatewayLock({
+        env,
+        allowInTests: true,
+        timeoutMs: 15,
+        pollIntervalMs: 2,
+        staleMs: 10_000,
+        platform: "linux",
+      });
+      await expect(pending).rejects.toBeInstanceOf(GatewayLockError);
 
-    spy.mockRestore();
+      spy.mockRestore();
 
-    const stalePayload = createLockPayload({
-      configPath,
-      startTime: 111,
-      createdAt: new Date(0).toISOString(),
-    });
-    await fs.writeFile(lockPath, JSON.stringify(stalePayload), "utf8");
+      const stalePayload = createLockPayload({
+        configPath,
+        startTime: 111,
+        createdAt: new Date(0).toISOString(),
+      });
+      await fs.writeFile(lockPath, JSON.stringify(stalePayload), "utf8");
 
-    const staleSpy = mockProcStatRead({
-      onProcRead: () => {
-        throw new Error("EACCES");
-      },
-    });
+      const staleSpy = mockProcStatRead({
+        onProcRead: () => {
+          throw new Error("EACCES");
+        },
+      });
 
-    const lock = await acquireGatewayLock({
-      env,
-      allowInTests: true,
-      timeoutMs: 30,
-      pollIntervalMs: 2,
-      staleMs: 1,
-      platform: "linux",
-    });
-    expect(lock).not.toBeNull();
+      const lock = await acquireGatewayLock({
+        env,
+        allowInTests: true,
+        timeoutMs: 30,
+        pollIntervalMs: 2,
+        staleMs: 1,
+        platform: "linux",
+      });
+      expect(lock).not.toBeNull();
 
-    await lock?.release();
-    staleSpy.mockRestore();
-    await cleanup();
-  });
+      await lock?.release();
+      staleSpy.mockRestore();
+      await cleanup();
+    },
+  );
 });
