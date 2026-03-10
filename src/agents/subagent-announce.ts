@@ -180,10 +180,7 @@ async function runAnnounceDeliveryWithRetry<T>(params: {
     try {
       return await params.run();
     } catch (err) {
-      if (
-        params.noRetryOnGatewayTimeout === true &&
-        isGatewayTimeoutError(err)
-      ) {
+      if (params.noRetryOnGatewayTimeout === true && isGatewayTimeoutError(err)) {
         throw err;
       }
       const delayMs = DIRECT_ANNOUNCE_TRANSIENT_RETRY_DELAYS_MS[retryIndex];
